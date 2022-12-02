@@ -1,0 +1,54 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  studentCheckout
+
+  Sample SAM Template for studentCheckout
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+
+Globals:
+  Function:
+    Runtime: java11
+    Architectures:
+      - x86_64
+    MemorySize: 512
+    Timeout: 30
+
+Resources:
+  studentbucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub ${AWS::StackName}-${AWS::AccountId}-${AWS::Region}
+  StudentCheckoutTopic:
+    Type: AWS::SNS::Topic
+  StudentCheckoutFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: StudentCheckoutFunction
+      Handler: com.aws.lambda.s3.sns.StudentCheckoutLambda::handler
+      Policies:
+        - S3ReadPolicy:
+            BucketName: !Sub ${AWS::StackName}-${AWS::AccountId}-${AWS::Region}
+        - SNSPublishMessagePolicy:
+            TopicName: !GetAtt StudentCheckoutTopic.TopicName
+      Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
+        Variables:
+          STUDENT_CHECKOUT_TOPIC: !Ref StudentCheckoutTopic
+          JAVA_TOOL_OPTIONS: -XX:+TieredCompilation -XX:TieredStopAtLevel=1 # More info about tiered compilation https://aws.amazon.com/blogs/compute/optimizing-aws-lambda-function-performance-for-java/
+      Events:
+        S3Event: 
+          Type: S3
+          Properties:
+            Bucket: !Ref studentbucket
+            Events: s3:ObjectCreated:*
+  StudentManagementFunction: 
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: StudentCheckoutFunction
+      Handler: com.aws.lambda.s3.sns.StudentManagementLambda::handler
+      Events:
+        SNSEvent:
+          Type: SNS # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Topic: !Ref StudentCheckoutTopic

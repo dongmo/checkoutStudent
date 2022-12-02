@@ -1,0 +1,17 @@
+[
+	{
+		"rollNo":"1", 
+		"name":"Samuel", 
+		"testScore":"50"
+	},
+	{
+		"rollNo":"2", 
+		"name":"Louis", 
+		"testScore":"90"
+	},
+	{
+		"rollNo":"3", 
+		"name":"Jacques", 
+		"testScore":"70"
+	}
+]
